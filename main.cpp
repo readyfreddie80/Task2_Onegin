@@ -7,10 +7,6 @@
 #include "helpers.h"
 
 
-
-
-
-
 int main () {
 
     char *iputFileName = "/home/freddie/CLionProjects/Task2_Onegin/Text/hamlet.txt";
@@ -34,7 +30,7 @@ int main () {
         exit (1);
     }
 
-    fclose(inputFile);
+    fclose (inputFile);
 
 
     int numberOfLines = countNumberOfLines (originalText, inputFileLength);
@@ -44,7 +40,7 @@ int main () {
         exit (1);
     }
 
-    Line *lines = (Line *)calloc(numberOfLines, sizeof(Line));
+    Line *lines = (Line *)calloc(numberOfLines, sizeof (Line));
 
     int numberOfNonEmptyLines = splitTextIntoLines (originalText, inputFileLength, lines);
 
@@ -54,27 +50,33 @@ int main () {
     }
 
 
-    qsort(lines, numberOfNonEmptyLines, sizeof(Line), comp2);
-
-
-
     char *outputFileName = "/home/freddie/CLionProjects/Task2_Onegin/hamletResult.txt";
     FILE *outputFile = fopen (outputFileName, "w");
     assert (outputFile != NULL);
 
+    qsort (lines, numberOfNonEmptyLines, sizeof (Line), compFromBegToEnd);
 
-    //fwrite(originalText, sizeof(char), inputFileLength, outputFile);
+    fputs ("ALPHABETIC DICTIONARY\n", outputFile);
 
-    for(int i = 0; i < numberOfNonEmptyLines; ++i) {
-        fwrite(lines[i].beginning, sizeof(char), lines[i].length, outputFile);
-        putc('\n', outputFile);
-    }
+    outputLines (lines, numberOfNonEmptyLines, outputFile);
 
-    fclose(outputFile);
+    qsort (lines, numberOfNonEmptyLines, sizeof (Line), compFromEndToBeg);
+
+    fputs ("\nRHYMES DICTIONARY\n", outputFile);
+
+    outputLines (lines, numberOfNonEmptyLines, outputFile);
+
+    fputs ("ORIGINAL\n", outputFile);
+
+    fwrite (originalText, sizeof (char), inputFileLength, outputFile);
+
+    fputc ('\n', outputFile);
+
+    fclose (outputFile);
 
 
-    free(originalText);
-    free(lines);
+    free (originalText);
+    free (lines);
 
     return 0;
 }
