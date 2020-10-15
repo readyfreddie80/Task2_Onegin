@@ -4,76 +4,112 @@
 #include <math.h>
 #include <string.h>
 
-#include "helpers.h"
+#include "texts.h"
+#include "stdfuncs_wrappers.h"
+#include "project_defines.h"
 
 
-int main () {
+#ifndef TESTS
+int main (int  argc, char *argv[]) {
 
-    char *iputFileName = "/home/freddie/CLionProjects/Task2_Onegin/Text/hamlet.txt";
-    FILE *inputFile = fopen (iputFileName, "r");
-    assert (inputFile != NULL);
+    if (argc != 3) {
+        FPRINTF_ERROR_AND_EXIT(
+                "Paths of source file and result file must be given as arguments."
+                "\nUsage: %s [source path] [result path]",
+                argv[0]);
+    }
 
-    int inputFileLength = fileSize (inputFile);
+    const char *inputFileName = argv[1];
 
-    char *originalText = (char *)calloc (inputFileLength + 1, sizeof (char));
-    assert (originalText != NULL);
+    FILE *inputFile = fopen_wrapper (inputFileName, "rb");
+    EXIT_IF_ERROR_OCCURRED();
+
+    size_t inputFileLength = fileSize (inputFile);
+
+    char *originalText = (char *)calloc_wrapper(
+            inputFileLength + 1,
+            sizeof(*originalText));
+    EXIT_IF_ERROR_OCCURRED();
+
     originalText[inputFileLength] = '\0';
-
-
-    if (fread (originalText, sizeof (char), inputFileLength, inputFile) != inputFileLength) {
+    if (fread (originalText, sizeof (*originalText), inputFileLength, inputFile) != inputFileLength) {
         if (feof (inputFile)) {
-            printf ("Premature end of file: %s", iputFileName);
+            FPRINTF_ERROR_AND_EXIT (
+                    "Premature end of file: %s",
+                    inputFileName);
         }
-        else
-            printf ("File %s read ERROR.", iputFileName);
-
-        exit (1);
+        else {
+            FPRINTF_ERROR_AND_EXIT (
+                    "File %s read ERROR.",
+                    inputFileName);
+        }
     }
 
-    fclose (inputFile);
+    fclose_wrapper (inputFile);
 
-
-    int numberOfLines = countNumberOfLines (originalText, inputFileLength);
-
-    if (numberOfLines < 1) {
-        printf ("ERROR: number of lines in file is %d", numberOfLines);
-        exit (1);
-    }
-
-    Line *lines = (Line *)calloc(numberOfLines, sizeof (Line));
-
-    int numberOfNonEmptyLines = splitTextIntoLines (originalText, inputFileLength, lines);
+    const char * splitters = "\n\r";
+    size_t numberOfNonEmptyLines = countNumberOfNonEmptyLines(
+            originalText,
+            inputFileLength,
+            splitters);
 
     if (numberOfNonEmptyLines < 1) {
-        printf ("ERROR: number of non-empty lines in file is %d", numberOfNonEmptyLines);
-        exit(1);
+        FPRINTF_ERROR_AND_EXIT (
+                "Number of non-empty lines in file can't be %zu",
+                numberOfNonEmptyLines);
     }
 
+    Line *lines = (Line *)calloc_wrapper(
+            numberOfNonEmptyLines,
+            sizeof (*lines));
+    EXIT_IF_ERROR_OCCURRED();
 
-    char *outputFileName = "/home/freddie/CLionProjects/Task2_Onegin/hamletResult.txt";
-    FILE *outputFile = fopen (outputFileName, "w");
-    assert (outputFile != NULL);
+    splitTextIntoLines(
+            originalText,
+            inputFileLength,
+            lines,
+            splitters);
 
-    qsort (lines, numberOfNonEmptyLines, sizeof (Line), compFromBegToEnd);
+    const char *outputFileName = argv[2];
+    FILE *outputFile = fopen_wrapper (outputFileName, "w");
+
+    qsort (
+            lines,
+            numberOfNonEmptyLines,
+            sizeof (*lines),
+            compFromBegToEnd);
 
     fputs ("ALPHABETIC DICTIONARY\n", outputFile);
 
-    outputLines (lines, numberOfNonEmptyLines, outputFile);
+    outputLines (
+            lines,
+            numberOfNonEmptyLines,
+            outputFile);
 
-    qsort (lines, numberOfNonEmptyLines, sizeof (Line), compFromEndToBeg);
+    qsort (
+            lines,
+            numberOfNonEmptyLines,
+            sizeof (*lines),
+            compFromEndToBeg);
 
     fputs ("\nRHYMES DICTIONARY\n", outputFile);
 
-    outputLines (lines, numberOfNonEmptyLines, outputFile);
+    outputLines (
+            lines,
+            numberOfNonEmptyLines,
+            outputFile);
 
-    fputs ("ORIGINAL\n", outputFile);
+    fputs ("\nORIGINAL\n", outputFile);
 
-    fwrite (originalText, sizeof (char), inputFileLength, outputFile);
+    fwrite (
+            originalText,
+            sizeof (*originalText),
+            inputFileLength,
+            outputFile);
 
     fputc ('\n', outputFile);
 
-    fclose (outputFile);
-
+    fclose_wrapper (outputFile);
 
     free (originalText);
     free (lines);
@@ -82,5 +118,5 @@ int main () {
 }
 
 
-
+#endif
 
